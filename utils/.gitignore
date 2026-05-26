@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Models - keep these
+# models/
+
+# Data - ignore completely (58K images not stored locally)
+data/
+*.jpg
+*.jpeg
+*.png
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store

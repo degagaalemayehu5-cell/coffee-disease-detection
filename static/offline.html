@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - Coffee Leaf Disease Detection</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            padding: 50px;
+            background: linear-gradient(135deg, #2c3e50, #27ae60);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 2rem;
+        }
+        h1 { font-size: 3rem; margin-bottom: 0; }
+        .icon { font-size: 5rem; }
+        button {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+        button:hover { background: #219a52; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🌿📴</div>
+        <h1>You're Offline</h1>
+        <p>Please check your internet connection to use the disease detection features.</p>
+        <button onclick="location.reload()">Try Again</button>
+        <hr style="margin: 2rem 0;">
+        <p><small>Previously detected results may still be available in your history.</small></p>
+    </div>
+</body>
+</html>

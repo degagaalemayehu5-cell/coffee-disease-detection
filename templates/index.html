@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Coffee Leaf Disease Detection</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; }
+        .result { margin-top: 20px; padding: 20px; border: 1px solid #ddd; display: inline-block; }
+        img { max-width: 300px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Coffee Leaf Disease Detection</h1>
+    <p>Upload a photo of a coffee leaf to detect diseases.</p>
+
+    <form method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept="image/*">
+        <button type="submit">Predict Disease</button>
+    </form>
+
+    {% if prediction %}
+    <div class="result">
+        <h2>Result: {{ prediction }}</h2>
+        {% if image_path %}
+            <img src="{{ url_for('uploaded_file', filename=image_path) }}" alt="Uploaded Leaf">
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+</body>
+</html>
