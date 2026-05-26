@@ -37,11 +37,6 @@ from utils.disease_info import DISEASE_INFO
 # PAGE CONFIG
 # ============================================================================
 
-st.set_page_config(
-    page_title="Coffee Leaf Disease Detection - Detect",
-    page_icon="🌿",
-    layout="wide"
-)
 
 # ============================================================================
 # AUTH CHECK

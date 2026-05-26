@@ -8,12 +8,6 @@ import pandas as pd
 import plotly.express as px
 import os
 
-# Page config
-st.set_page_config(
-    page_title="Coffee Leaf Disease Detection - About",
-    page_icon="📖",
-    layout="wide"
-)
 
 # Custom CSS
 st.markdown("""

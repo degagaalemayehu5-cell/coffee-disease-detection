@@ -18,12 +18,6 @@ from utils.auth import check_authentication, get_user_history, get_db_stats, upd
 from utils.translations import get_text
 from utils.disease_info import DISEASE_INFO
 
-# Page config
-st.set_page_config(
-    page_title="Coffee Leaf Disease Detection - Profile",
-    page_icon="👤",
-    layout="wide"
-)
 
 # Check if user is logged in
 if not check_authentication():
