@@ -23,7 +23,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.translations import get_text
-from utils.model_loader import load_model_with_fallback
+from utils.model_loader import load_model_compatible
 from utils.pwa import get_pwa_install_html
 from utils.auth import (
     check_authentication,
@@ -486,13 +486,10 @@ with col1:
                         selected_model
                     )
 
-                    # Use the enhanced model loader with fallback
-                    model, is_fallback = load_model_with_fallback(model_path)
+                    model = load_model_compatible(model_path)
 
-                    if is_fallback:
-                        st.warning("⚠️ Using compatibility mode. Predictions may be affected.")
-                    elif model is None:
-                        st.error("Failed to load model. Please contact support.")
+                    if model is None:
+                        st.error("Failed to load model. Please ensure the selected model file is valid and try again.")
                         st.stop()
 
                     # Preprocess image
