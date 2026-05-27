@@ -12,13 +12,7 @@ import os
 # PAGE HEADER
 # ============================================================================
 
-st.markdown("""
-<div class="about-header">
-    <h1>📖 About Coffee Leaf Disease Detection System</h1>
-    <p>BSc Thesis - Hawassa University, Institute of Technology</p>
-    <p>Faculty of Electrical and Computer Engineering | Computer Engineering Stream</p>
-</div>
-""", unsafe_allow_html=True)
+
 
 # ============================================================================
 # CUSTOM CSS
