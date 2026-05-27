@@ -1,86 +1,63 @@
 """
-Custom model loader to handle Keras 3.13 models in Keras 3.12
-And handle legacy models with batch_shape/optional parameters
+Custom model loader to handle Keras models
 """
 
 import tensorflow as tf
-from tensorflow.keras.layers import Dense, InputLayer
 from tensorflow.keras.models import load_model
+import os
 import warnings
 warnings.filterwarnings('ignore')
 
-class CustomDense(Dense):
-    """Custom Dense layer that ignores quantization_config"""
-    def __init__(self, *args, **kwargs):
-        kwargs.pop('quantization_config', None)
-        super().__init__(*args, **kwargs)
-
-
-class CustomInputLayer(InputLayer):
-    """Custom InputLayer that removes unsupported parameters"""
-    def __init__(self, *args, **kwargs):
-        # Remove parameters that cause issues in older TensorFlow versions
-        kwargs.pop('batch_shape', None)
-        kwargs.pop('optional', None)
-        super().__init__(*args, **kwargs)
-
-
-# Register custom objects for loading legacy models
-custom_objects = {
-    'Dense': CustomDense,
-    'InputLayer': CustomInputLayer,
-    'Functional': tf.keras.models.Model,
-    'Sequential': tf.keras.models.Sequential
-}
-
-
 def load_model_compatible(model_path):
-    """Load model with compatibility fixes for different TensorFlow versions"""
+    """Load model with compatibility fixes"""
     
     print(f"Attempting to load model from: {model_path}")
     
-    # Try different loading strategies
-    strategies = [
-        # Strategy 1: With custom objects, no compilation
-        lambda: load_model(model_path, custom_objects=custom_objects, compile=False),
-        
-        # Strategy 2: Without custom objects
-        lambda: load_model(model_path, compile=False),
-        
-        # Strategy 3: Default loading
-        lambda: tf.keras.models.load_model(model_path),
-        
-        # Strategy 4: With custom_objects and allow_pickle
-        lambda: load_model(model_path, custom_objects=custom_objects, compile=False, safe_mode=False),
-    ]
+    # Check if file exists
+    if not os.path.exists(model_path):
+        print(f"❌ Model file not found: {model_path}")
+        return None
     
-    for i, strategy in enumerate(strategies):
+    # Get file size
+    file_size = os.path.getsize(model_path) / (1024 * 1024)
+    print(f"📁 Model file size: {file_size:.1f} MB")
+    
+    # Check if it's the dummy model (small size)
+    if file_size < 1.0:
+        print("⚠️ This appears to be a dummy model, not the real model")
+        return None
+    
+    try:
+        # Try loading with compile=False first
+        model = load_model(model_path, compile=False)
+        print(f"✅ Model loaded successfully: {model_path}")
+        return model
+    except Exception as e:
+        print(f"Error loading model: {e}")
+        
         try:
-            model = strategy()
-            print(f"✓ Model loaded successfully using strategy {i+1}")
+            # Try with custom objects
+            model = load_model(model_path, compile=False, safe_mode=False)
+            print(f"✅ Model loaded with safe_mode=False")
             return model
-        except Exception as e:
-            print(f"Strategy {i+1} failed: {e}")
-            continue
-    
-    print(f"❌ All loading strategies failed for {model_path}")
-    return None
+        except Exception as e2:
+            print(f"Second attempt failed: {e2}")
+            return None
 
 
 def load_model_with_fallback(model_path):
-    """Load model with fallback to dummy model if fails"""
+    """Load model, return (model, is_fallback)"""
+    
     model = load_model_compatible(model_path)
     
     if model is None:
-        print("⚠️ Creating fallback model for testing")
-        # Create a simple fallback model
-        dummy_input = tf.keras.layers.Input(shape=(224, 224, 3))
-        x = tf.keras.layers.Flatten()(dummy_input)
+        print("⚠️ Creating fallback model - predictions will be random!")
+        # Create a simple model that always predicts Healthy
+        inputs = tf.keras.layers.Input(shape=(224, 224, 3))
+        x = tf.keras.layers.Flatten()(inputs)
         x = tf.keras.layers.Dense(128, activation='relu')(x)
-        output = tf.keras.layers.Dense(5, activation='softmax')(x)
-        model = tf.keras.Model(inputs=dummy_input, outputs=output)
-        
-        print("⚠️ USING FALLBACK MODEL - predictions may not be accurate")
+        outputs = tf.keras.layers.Dense(5, activation='softmax')(x)
+        model = tf.keras.Model(inputs=inputs, outputs=outputs)
         return model, True
     
     return model, False
