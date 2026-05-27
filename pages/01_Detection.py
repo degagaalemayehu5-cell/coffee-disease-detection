@@ -23,7 +23,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.translations import get_text
-from utils.model_loader import load_model_compatible
+from utils.model_loader import load_model_with_fallback
 from utils.pwa import get_pwa_install_html
 from utils.auth import (
     check_authentication,
@@ -32,11 +32,6 @@ from utils.auth import (
     save_feedback_to_db
 )
 from utils.disease_info import DISEASE_INFO
-
-# ============================================================================
-# PAGE CONFIG
-# ============================================================================
-
 
 # ============================================================================
 # AUTH CHECK
@@ -203,11 +198,6 @@ language = st.sidebar.radio(
 )
 
 # ============================================================================
-# HEADER
-# ============================================================================
-
-
-# ============================================================================
 # SIDEBAR
 # ============================================================================
 
@@ -222,7 +212,7 @@ with st.sidebar:
 
     model_files = [
         f for f in os.listdir(models_dir)
-        if f.endswith('.h5')
+        if f.endswith('.h5') or f.endswith('.keras')
     ] if os.path.exists(models_dir) else []
 
     if model_files:
@@ -365,7 +355,6 @@ with col1:
 
         # ============================================================
         # MANUAL CROPPING - AUTO UPDATE - NO CONFIRM BUTTON
-        # (User's preferred cropping section - kept exactly as is)
         # ============================================================
 
         if crop_option == "Manual (draw rectangle)":
@@ -379,17 +368,24 @@ with col1:
 
             st.markdown("### Crop Area")
 
-            # Use the resize helper so the cropper UI fits the page similar to photo apps
-            cropped = st_cropper(
-                image,
-                realtime_update=True,
-                box_color="#00ff00",
-                aspect_ratio=None,
-                return_type="image",
-                key=st.session_state.cropper_key,
-                should_resize_image=True,
-                stroke_width=2,
-            )
+            # Try different cropper configurations for compatibility
+            try:
+                cropped = st_cropper(
+                    image,
+                    realtime_update=True,
+                    box_color="#00ff00",
+                    return_type="image",
+                    key=st.session_state.cropper_key,
+                    stroke_width=2,
+                )
+            except Exception:
+                cropped = st_cropper(
+                    image,
+                    realtime_update=True,
+                    box_color="#00ff00",
+                    return_type="image",
+                    key=st.session_state.cropper_key,
+                )
 
             if cropped is not None:
 
@@ -404,7 +400,7 @@ with col1:
                     st.image(
                         cropped,
                         caption="Live Cropped Image",
-                        use_container_width=True
+                        width=300
                     )
 
                 else:
@@ -440,7 +436,7 @@ with col1:
             st.image(
                 final_image,
                 caption='Cropped Image',
-                use_container_width=True
+                width=300
             )
 
         # ============================================================
@@ -452,7 +448,7 @@ with col1:
             st.image(
                 image,
                 caption='Uploaded Image',
-                use_container_width=True
+                width=300
             )
 
         # ============================================================
@@ -490,14 +486,17 @@ with col1:
                         selected_model
                     )
 
-                    model = load_model_compatible(model_path)
+                    # Use the enhanced model loader with fallback
+                    model, is_fallback = load_model_with_fallback(model_path)
 
-                    if model is None:
-                        st.error("Failed to load model!")
+                    if is_fallback:
+                        st.warning("⚠️ Using compatibility mode. Predictions may be affected.")
+                    elif model is None:
+                        st.error("Failed to load model. Please contact support.")
                         st.stop()
 
+                    # Preprocess image
                     resized = final_image.resize((224, 224))
-
                     img_array = np.array(resized) / 255.0
                     img_array = np.expand_dims(img_array, axis=0)
 
