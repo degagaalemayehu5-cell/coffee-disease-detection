@@ -117,7 +117,7 @@ language = st.sidebar.radio(
 # ============================================================================
 
 with st.sidebar:
-    st.header("⚙️ Settings")
+    st.header(get_text('settings', language))
     
     # Model selection
     models_dir = 'models'
@@ -129,31 +129,31 @@ with st.sidebar:
             if 'mobilenet' in f.lower() and 'best' in f.lower():
                 default_index = i
                 break
-        selected_model = st.selectbox("Select Model", model_files, index=default_index)
+        selected_model = st.selectbox(get_text('select_model', language), model_files, index=default_index)
     else:
-        st.error("No model files found!")
+        st.error(get_text('no_model', language))
         st.stop()
     
     st.markdown("---")
     
     # User stats
-    st.header("📊 Your Statistics")
+    st.header(get_text('your_statistics', language))
     stats = get_db_stats(st.session_state.user_email)
     if stats:
         col1, col2 = st.columns(2)
         with col1:
-            st.metric("Total Predictions", stats.get('total_predictions', 0))
+            st.metric(get_text('total_predictions', language), stats.get('total_predictions', 0))
         with col2:
             avg_conf = stats.get('avg_confidence', 0)
-            st.metric("Avg Confidence", f"{avg_conf:.1f}%")
+            st.metric(get_text('avg_confidence', language), f"{avg_conf:.1f}%")
     
     st.markdown("---")
     
     # User info
-    st.header("👤 Account")
-    st.info(f"Logged in as: **{st.session_state.user_email}**")
+    st.header(get_text('account', language))
+    st.info(f"{get_text('logged_in_as', language)}: **{st.session_state.user_email}**")
     
-    if st.button("🚪 Logout", use_container_width=True):
+    if st.button(get_text('logout', language), use_container_width=True):
         for key in list(st.session_state.keys()):
             del st.session_state[key]
         st.rerun()
@@ -239,21 +239,21 @@ def display_batch_results(results, language):
     # ============================================================
     # SUMMARY STATISTICS
     # ============================================================
-    st.subheader("📊 Summary")
+    st.subheader(get_text('your_statistics', language))
     
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.markdown(f"""
         <div class="stats-card">
             <h2>{len(results)}</h2>
-            <p>Total Images</p>
+            <p>{get_text('total_predictions', language)}</p>
         </div>
         """, unsafe_allow_html=True)
     with col2:
         st.markdown(f"""
         <div class="stats-card" style="background: linear-gradient(135deg, #28a745, #20c997);">
             <h2>{len(successful)}</h2>
-            <p>Successful</p>
+            <p>{get_text('successful', language) if get_text('successful', language) != 'successful' else 'Successful'}</p>
         </div>
         """, unsafe_allow_html=True)
     with col3:
@@ -269,7 +269,7 @@ def display_batch_results(results, language):
             st.markdown(f"""
             <div class="stats-card" style="background: linear-gradient(135deg, #17a2b8, #138496);">
                 <h2>{avg_conf*100:.1f}%</h2>
-                <p>Avg Confidence</p>
+                <p>{get_text('avg_confidence', language)}</p>
             </div>
             """, unsafe_allow_html=True)
     
@@ -280,7 +280,7 @@ def display_batch_results(results, language):
         col_a, col_b = st.columns(2)
         
         with col_a:
-            st.markdown("**📈 Disease Distribution**")
+            st.markdown(f"**📈 {get_text('disease_distribution', language)}**")
             disease_counts = {}
             for r in successful:
                 disease = r['predicted_class']
@@ -302,7 +302,7 @@ def display_batch_results(results, language):
             fig = px.pie(
                 values=list(disease_counts.values()),
                 names=[DISEASE_INFO.get(d, {}).get('name', d) for d in disease_counts.keys()],
-                title="Disease Distribution",
+                title=get_text('disease_distribution', language),
                 color_discrete_sequence=px.colors.qualitative.Set3
             )
             fig.update_layout(height=300)
@@ -312,7 +312,7 @@ def display_batch_results(results, language):
     # INDIVIDUAL RESULTS
     # ============================================================
     st.markdown("---")
-    st.subheader("🔍 Detailed Results")
+    st.subheader(get_text('detailed_results', language))
     
     for result in results:
         if result['success']:
@@ -366,7 +366,7 @@ def display_batch_results(results, language):
                         prob_df['Display'] = prob_df['Disease'].apply(lambda x: DISEASE_INFO.get(x, {}).get('name', x))
                     
                     fig = px.bar(prob_df, x='Probability', y='Display', orientation='h',
-                                 title='Prediction Probabilities',
+                                 title=get_text('prediction_probabilities', language),
                                  color='Probability',
                                  color_continuous_scale='Viridis',
                                  text=prob_df['Probability'].apply(lambda x: f'{x:.1f}%'))
@@ -382,7 +382,7 @@ def display_batch_results(results, language):
     # ============================================================
     if successful:
         st.markdown("---")
-        st.subheader("📥 Export Results")
+        st.subheader(get_text('export_results', language))
         
         # Create CSV export
         export_data = []
@@ -403,7 +403,7 @@ def display_batch_results(results, language):
         col_exp1, col_exp2 = st.columns(2)
         with col_exp1:
             st.download_button(
-                label="📥 Download Results (CSV)",
+                label=get_text('download_results_csv', language),
                 data=csv,
                 file_name=f"batch_predictions_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                 mime="text/csv",
@@ -415,32 +415,32 @@ def display_batch_results(results, language):
             import json
             json_data = json.dumps(export_data, indent=2, default=str)
             st.download_button(
-                label="📥 Download Results (JSON)",
+                label=get_text('download_results_json', language),
                 data=json_data,
                 file_name=f"batch_predictions_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
                 mime="application/json",
                 use_container_width=True
             )
         
-        st.success(f"✅ Successfully processed {len(successful)} images and saved to your history!")
+        st.success(f"✅ {get_text('successfully_processed', language)} {len(successful)} {get_text('images_and_saved_history', language)}")
 
 # ============================================================================
 # MAIN CONTENT
 # ============================================================================
 
-st.subheader("📤 Upload Multiple Images")
+st.subheader(get_text('upload_multiple_images', language))
 
-st.markdown("""
+st.markdown(f"""
 <div class="supported-formats">
-📷 <strong>Supported formats:</strong> JPG, JPEG, PNG, BMP, WEBP<br>
-💡 <strong>Tip:</strong> Select multiple images at once (Ctrl+Click or Shift+Click)<br>
-📊 <strong>Batch Limit:</strong> Up to 50 images per batch
+📷 <strong>{get_text('supported_formats_text', language)}</strong><br>
+💡 <strong>Tip:</strong> {get_text('select_multiple_images', language)}<br>
+📊 <strong>{get_text('batch_limit_text', language)}</strong>
 </div>
 """, unsafe_allow_html=True)
 
 # File uploader for multiple images
 uploaded_files = st.file_uploader(
-    "Choose images...",
+    get_text('choose_images', language),
     type=['jpg', 'jpeg', 'png', 'bmp', 'webp'],
     accept_multiple_files=True,
     help="Select multiple coffee leaf images for batch analysis",
@@ -450,10 +450,10 @@ uploaded_files = st.file_uploader(
 if uploaded_files:
     # Limit to 50 images
     if len(uploaded_files) > 50:
-        st.warning(f"You selected {len(uploaded_files)} images. Maximum is 50. Only first 50 will be processed.")
+        st.warning(f"{get_text('batch_limit_text', language)}")
         uploaded_files = uploaded_files[:50]
     
-    st.info(f"📸 {len(uploaded_files)} image(s) selected for batch prediction")
+    st.info(f"📸 {len(uploaded_files)} {get_text('image_selected_info', language)}")
     
     # Preview selected images
     with st.expander(f"📷 Preview Selected Images ({len(uploaded_files)} images)"):
@@ -469,8 +469,8 @@ if uploaded_files:
             st.caption(f"... and {len(uploaded_files) - 6} more images")
     
     # Start batch prediction button
-    if st.button("🚀 Start Batch Prediction", type="primary", use_container_width=True):
-        with st.spinner("Loading model..."):
+    if st.button(get_text('start_batch_prediction', language), type="primary", use_container_width=True):
+        with st.spinner(get_text('loading_model', language)):
             # Load class names
             with open('models/class_names.json', 'r') as f:
                 class_names = json.load(f)
@@ -480,7 +480,7 @@ if uploaded_files:
             model = load_model_compatible(model_path)
             
             if model is None:
-                st.error("Failed to load model!")
+                st.error(get_text('failed_to_load_model', language))
                 st.stop()
         
         # Process batch
@@ -495,7 +495,7 @@ if uploaded_files:
         st.balloons()
 
 else:
-    st.info("👆 Please select one or more images to begin batch prediction")
+    st.info(get_text('no_images_selected', language))
 
 # ============================================================================
 # FOOTER
@@ -503,6 +503,6 @@ else:
 
 st.markdown("---")
 st.markdown(
-    "<center><small>Batch prediction mode - Analyze multiple coffee leaf images at once</small></center>",
+    f"<center><small>{get_text('batch_prediction_footer', language)}</small></center>",
     unsafe_allow_html=True
 )

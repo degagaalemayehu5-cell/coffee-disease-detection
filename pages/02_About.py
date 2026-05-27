@@ -8,6 +8,8 @@ import pandas as pd
 import plotly.express as px
 import os
 
+from utils.translations import get_text
+
 # ============================================================================
 # PAGE HEADER
 # ============================================================================
@@ -50,20 +52,20 @@ st.markdown("""
 # ============================================================================
 
 language = st.sidebar.radio(
-    "🌐 Language",
-    options=['English', 'አማርኛ', 'Afaan Oromo'],
-    index=0,
+    get_text('language', 'en'),
+    options=['en', 'am', 'om'],
+    format_func=lambda x: {"en": "English", "am": "አማርኛ", "om": "Afaan Oromo"}.get(x, x),
     horizontal=True
 )
 
 st.sidebar.markdown("---")
-st.sidebar.info("📚 This page contains documentation about the model, dataset, and methodology used in this thesis.")
+st.sidebar.info(get_text('about_page_info', language))
 
 # ============================================================================
 # THESIS ABSTRACT
 # ============================================================================
 
-with st.expander("📝 Thesis Abstract", expanded=True):
+with st.expander(get_text('thesis_abstract', language), expanded=True):
     st.markdown("""
     ### Abstract
     
@@ -89,7 +91,7 @@ with st.expander("📝 Thesis Abstract", expanded=True):
 # KEY METRICS - REAL DATA
 # ============================================================================
 
-st.subheader("🎯 Key Performance Metrics")
+st.subheader(get_text('key_performance_metrics', language))
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -129,7 +131,7 @@ with col4:
 # TRAINING CURVES - REAL DATA FROM YOUR TRAINING
 # ============================================================================
 
-st.subheader("📈 Training Progress")
+st.subheader(get_text('training_progress', language))
 
 # YOUR REAL DATA from MobileNetV2 training
 epochs = list(range(1, 13))
@@ -149,7 +151,7 @@ with col1:
         'Validation Accuracy': val_acc
     })
     fig_acc = px.line(acc_df, x='Epoch', y=['Training Accuracy', 'Validation Accuracy'],
-                      title='Model Accuracy Over Epochs',
+                      title=get_text('model_accuracy_over_epochs', language),
                       markers=True,
                       color_discrete_map={
                           'Training Accuracy': '#2ecc71',
@@ -166,7 +168,7 @@ with col2:
         'Validation Loss': val_loss
     })
     fig_loss = px.line(loss_df, x='Epoch', y=['Training Loss', 'Validation Loss'],
-                       title='Model Loss Over Epochs',
+                       title=get_text('model_loss_over_epochs', language),
                        markers=True,
                        color_discrete_map={
                            'Training Loss': '#e74c3c',
@@ -175,13 +177,13 @@ with col2:
     fig_loss.update_layout(height=400)
     st.plotly_chart(fig_loss, use_container_width=True)
 
-st.caption("📊 Training stopped at Epoch 12 (Early stopping after 8 epochs without improvement)")
+st.caption(get_text('training_stopped', language))
 
 # ============================================================================
 # MODEL ARCHITECTURE
 # ============================================================================
 
-with st.expander("🏗️ Model Architecture", expanded=True):
+with st.expander(get_text('model_architecture', language), expanded=True):
     st.markdown("""
     ### MobileNetV2 Architecture with Transfer Learning
     
@@ -204,7 +206,7 @@ with st.expander("🏗️ Model Architecture", expanded=True):
 # DATASET INFORMATION
 # ============================================================================
 
-with st.expander("📊 Dataset Information", expanded=True):
+with st.expander(get_text('dataset_information', language), expanded=True):
     st.markdown("""
     ### Coffee Leaf Disease Dataset
     
@@ -222,7 +224,7 @@ with st.expander("📊 Dataset Information", expanded=True):
     st.markdown("---")
     
     # Class distribution
-    st.subheader("Class Distribution")
+    st.subheader(get_text('class_distribution', language))
     
     class_data = pd.DataFrame({
         'Class': ['Healthy', 'Rust', 'Cercospora', 'Phoma', 'Miner'],
@@ -233,7 +235,7 @@ with st.expander("📊 Dataset Information", expanded=True):
     })
     
     fig = px.bar(class_data, x='Class', y=['Training', 'Validation', 'Test'], 
-                 title='Dataset Split by Class',
+                 title=get_text('dataset_split_by_class', language),
                  barmode='group',
                  color_discrete_sequence=['#2ecc71', '#3498db', '#e74c3c'])
     fig.update_layout(height=400)
@@ -245,7 +247,7 @@ with st.expander("📊 Dataset Information", expanded=True):
 # TRAINING METHODOLOGY
 # ============================================================================
 
-with st.expander("⚙️ Training Methodology", expanded=True):
+with st.expander(get_text('training_methodology', language), expanded=True):
     st.markdown("""
     ### Training Configuration
     

@@ -90,7 +90,7 @@ history = get_user_history(user_email)
 # PROFILE OVERVIEW SECTION
 # ============================================================================
 
-st.subheader("📊 Profile Overview")
+st.subheader(get_text('profile_overview', language))
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -140,7 +140,7 @@ with col4:
 # PROFILE INFORMATION
 # ============================================================================
 
-st.subheader("👤 Profile Information")
+st.subheader(get_text('profile_information', language))
 
 col1, col2 = st.columns(2)
 
@@ -192,7 +192,7 @@ with col2:
 # PREDICTION HISTORY
 # ============================================================================
 
-st.subheader("📜 Prediction History")
+st.subheader(get_text('history_title', language))
 
 if history:
     # Convert history to DataFrame
@@ -209,37 +209,43 @@ if history:
     # Summary statistics
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("Total Predictions", len(df))
+        st.metric(get_text('total_predictions', language), len(df))
     with col2:
         most_common = df['disease_display'].mode().iloc[0] if not df.empty else "None"
-        st.metric("Most Common Disease", most_common)
+        st.metric(get_text('most_common_disease', language), most_common)
     with col3:
         recent_date = df['created_at'].max().strftime("%Y-%m-%d") if not df.empty else "None"
-        st.metric("Last Prediction", recent_date)
+        st.metric(get_text('last_prediction', language), recent_date)
     
     # Filter options
     st.markdown("---")
     col1, col2 = st.columns(2)
     with col1:
         date_filter = st.selectbox(
-            "Filter by time period",
-            ["All Time", "Last 7 Days", "Last 30 Days", "Last 90 Days"]
+            get_text('filter_by_time_period', language),
+            [get_text('all_time', language), get_text('last_7_days', language), get_text('last_30_days', language), get_text('last_90_days', language)]
         )
     with col2:
         disease_filter = st.selectbox(
-            "Filter by disease",
-            ["All Diseases"] + list(df['disease_display'].unique())
+            get_text('filter_by_disease', language),
+            [get_text('all_diseases', language)] + list(df['disease_display'].unique())
         )
     
     # Apply filters
     filtered_df = df.copy()
     
-    if date_filter != "All Time":
-        days = {"Last 7 Days": 7, "Last 30 Days": 30, "Last 90 Days": 90}[date_filter]
-        cutoff_date = datetime.now() - timedelta(days=days)
-        filtered_df = filtered_df[filtered_df['created_at'] >= cutoff_date]
+    if date_filter != get_text('all_time', language):
+        filter_map = {
+            get_text('last_7_days', language): 7,
+            get_text('last_30_days', language): 30,
+            get_text('last_90_days', language): 90
+        }
+        days = filter_map.get(date_filter, None)
+        if days is not None:
+            cutoff_date = datetime.now() - timedelta(days=days)
+            filtered_df = filtered_df[filtered_df['created_at'] >= cutoff_date]
     
-    if disease_filter != "All Diseases":
+    if disease_filter != get_text('all_diseases', language):
         filtered_df = filtered_df[filtered_df['disease_display'] == disease_filter]
     
     # Display table
@@ -256,7 +262,7 @@ if history:
     # Download button
     csv = filtered_df[['created_at', 'predicted_disease', 'confidence']].to_csv(index=False)
     st.download_button(
-        label="📥 Download History as CSV",
+        label=get_text('download_history_csv', language),
         data=csv,
         file_name=f"prediction_history_{user_email}.csv",
         mime="text/csv"
@@ -265,7 +271,7 @@ if history:
     # ============================================================
     # VISUALIZATIONS
     # ============================================================
-    st.subheader("📊 Analytics")
+    st.subheader(get_text('analytics', language))
     
     col1, col2 = st.columns(2)
     
@@ -276,13 +282,13 @@ if history:
             fig = px.pie(
                 values=disease_counts.values,
                 names=disease_counts.index,
-                title="Disease Distribution",
+                title=get_text('disease_distribution', language),
                 color_discrete_sequence=px.colors.qualitative.Set3
             )
             fig.update_traces(textposition='inside', textinfo='percent+label')
             st.plotly_chart(fig, use_container_width=True)
         else:
-            st.info("No data available for the selected filters")
+            st.info(get_text('no_data_available', language))
     
     with col2:
         # Predictions over time
@@ -294,13 +300,13 @@ if history:
                 daily_counts,
                 x='Date',
                 y='Count',
-                title="Predictions Over Time",
+                title=get_text('predictions_over_time', language),
                 markers=True
             )
-            fig.update_layout(xaxis_title="Date", yaxis_title="Number of Predictions")
+            fig.update_layout(xaxis_title=get_text('date', language), yaxis_title=get_text('number_of_predictions', language))
             st.plotly_chart(fig, use_container_width=True)
         else:
-            st.info("No data available for the selected filters")
+            st.info(get_text('no_data_available', language))
     
     # Confidence trend
     if not filtered_df.empty:
@@ -319,12 +325,12 @@ if history:
         st.plotly_chart(fig, use_container_width=True)
     
 else:
-    st.info("📌 No predictions yet. Go to the Detection page to analyze coffee leaves!")
+    st.info(get_text('no_predictions_yet', language))
     
     # Show sample image link
-    st.markdown("""
+    st.markdown(f"""
     <div style="text-align: center; padding: 2rem;">
-        <p>👉 <a href="#" onclick="alert('Please go to Detection page from sidebar')">Go to Detection Page</a></p>
+        <p>👉 <a href="#" onclick="alert('Please go to Detection page from sidebar')">{get_text('go_to_detection', language)}</a></p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -332,15 +338,15 @@ else:
 # ACCOUNT SETTINGS
 # ============================================================================
 
-st.subheader("⚙️ Account Settings")
+st.subheader(get_text('account_settings', language))
 
-with st.expander("🔐 Change Password"):
+with st.expander(get_text('change_password', language)):
     with st.form("change_password_form"):
-        current_password = st.text_input("Current Password", type="password")
-        new_password = st.text_input("New Password", type="password")
-        confirm_password = st.text_input("Confirm New Password", type="password")
+        current_password = st.text_input(get_text('current_password', language), type="password")
+        new_password = st.text_input(get_text('new_password', language), type="password")
+        confirm_password = st.text_input(get_text('confirm_new_password', language), type="password")
         
-        submitted = st.form_submit_button("Update Password")
+        submitted = st.form_submit_button(get_text('update_password', language))
         
         if submitted:
             if not current_password or not new_password:
@@ -355,22 +361,22 @@ with st.expander("🔐 Change Password"):
                 if success:
                     st.success(message)
                     # Clear session and ask to login again
-                    st.info("Please login again with your new password")
-                    if st.button("Logout Now"):
+                    st.info(get_text('please_login_again', language))
+                    if st.button(get_text('logout_now', language)):
                         for key in list(st.session_state.keys()):
                             del st.session_state[key]
                         st.rerun()
                 else:
                     st.error(message)
 
-with st.expander("🗑️ Delete Account"):
-    st.warning("⚠️ Deleting your account will permanently remove all your prediction history. This action cannot be undone.")
+with st.expander(get_text('delete_my_account', language)):
+    st.warning(get_text('delete_account_warning', language))
     
     with st.form("delete_account_form"):
-        confirm_email = st.text_input("Confirm your email to delete account")
-        delete_password = st.text_input("Enter your password", type="password")
+        confirm_email = st.text_input(get_text('confirm_email_delete', language))
+        delete_password = st.text_input(get_text('enter_your_password', language), type="password")
         
-        submitted = st.form_submit_button("Delete My Account", type="primary")
+        submitted = st.form_submit_button(get_text('delete_my_account', language), type="primary")
         
         if submitted:
             if confirm_email != user_email:
@@ -391,8 +397,8 @@ with st.expander("🗑️ Delete Account"):
 # EXPORT DATA
 # ============================================================================
 
-with st.expander("📤 Export My Data"):
-    st.markdown("Export all your prediction data in JSON format")
+with st.expander(get_text('export_my_data', language)):
+    st.markdown(get_text('export_my_data', language))
     
     if history:
         # Prepare export data
@@ -416,13 +422,13 @@ with st.expander("📤 Export My Data"):
         json_data = json.dumps(export_data, indent=2, default=str)
         
         st.download_button(
-            label="📥 Download All Data (JSON)",
+            label=get_text('download_all_data', language),
             data=json_data,
             file_name=f"coffee_disease_data_{user_email}_{datetime.now().strftime('%Y%m%d')}.json",
             mime="application/json"
         )
     else:
-        st.info("No data to export")
+        st.info(get_text('no_data_to_export', language))
 
 # ============================================================================
 # FOOTER

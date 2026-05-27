@@ -20,40 +20,31 @@ class DenseWithQuantization(tf.keras.layers.Dense):
 
 def load_model_compatible(model_path):
     """Load model with compatibility fixes."""
-
+    
     print(f"Attempting to load model from: {model_path}")
 
     if not os.path.exists(model_path):
-        print(f"Model file not found: {model_path}")
+        print(f"❌ Model file not found: {model_path}")
         return None
 
     file_size = os.path.getsize(model_path) / (1024 * 1024)
-    print(f"Model file size: {file_size:.1f} MB")
+    print(f"📁 Model file size: {file_size:.1f} MB")
 
-    if file_size < 1.0:
-        print("This appears to be a dummy model, not the real model")
-        return None
-
+    # No dummy model check - this will only load real models
     custom_objects = {
         'Dense': DenseWithQuantization
     }
 
     try:
         model = load_model(model_path, compile=False, custom_objects=custom_objects)
-        print(f"Model loaded successfully: {model_path}")
+        print(f"✅ Model loaded successfully: {model_path}")
         return model
     except Exception as e:
-        print(f"Error loading model: {e}")
-
+        print(f"⚠️ First attempt failed: {e}")
         try:
-            model = load_model(
-                model_path,
-                compile=False,
-                safe_mode=False,
-                custom_objects=custom_objects
-            )
-            print("Model loaded with safe_mode=False and compatibility overrides")
+            model = load_model(model_path, compile=False, safe_mode=False, custom_objects=custom_objects)
+            print(f"✅ Model loaded with safe_mode=False")
             return model
         except Exception as e2:
-            print(f"Second attempt failed: {e2}")
-            return None 
+            print(f"❌ Second attempt failed: {e2}")
+            return None
