@@ -1,36 +1,36 @@
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, InputLayer
 from tensorflow.keras.models import load_model
-import warnings
-warnings.filterwarnings('ignore')
 
-# 1. Custom InputLayer to strip out Keras 3 specifics
 class CustomInputLayer(InputLayer):
     def __init__(self, *args, **kwargs):
-        # Strip out Keras 3 fields that break Keras 2 / older Keras 3
-        kwargs.pop('batch_shape', None)
+        # 1. Capture the batch_shape Keras 3 gave it
+        batch_shape = kwargs.pop('batch_shape', None)
+        
+        # 2. Map it to the 'batch_input_shape' key that Keras 2 actually understands
+        if batch_shape and 'batch_input_shape' not in kwargs:
+            kwargs['batch_input_shape'] = batch_shape
+            
+        # 3. Strip out the unsupported 'optional' flag completely
         kwargs.pop('optional', None)
+        
         super().__init__(*args, **kwargs)
 
-# 2. Your existing Custom Dense Layer
 class CustomDense(Dense):
     def __init__(self, *args, **kwargs):
         kwargs.pop('quantization_config', None)
         super().__init__(*args, **kwargs)
 
-# Register BOTH custom objects so Keras uses them during loading
+# Register both to patch the version gap
 custom_objects = {
     'InputLayer': CustomInputLayer,
     'Dense': CustomDense
 }
 
 def load_model_compatible(model_path):
-    """Load model with compatibility fixes for both Input and Dense layers"""
     try:
-        # Load with safe_mode=False if your Keras version supports it
-        model = load_model(model_path, custom_objects=custom_objects, compile=False)
-        print(f"✓ Model loaded: {model_path}")
-        return model
+        # Load without compiling to skip optimizer configuration mismatches
+        return load_model(model_path, custom_objects=custom_objects, compile=False)
     except Exception as e:
-        print(f"Error loading model: {e}")
+        print(f"Error: {e}")
         return None
