@@ -4,6 +4,7 @@ Custom model loader - Downloads model from Google Drive with TF 2.15 Compatibili
 
 import tensorflow as tf
 from tensorflow.keras.models import load_model
+from tensorflow.keras.layers import Dense, InputLayer
 import os
 import warnings
 import requests
@@ -22,17 +23,33 @@ MODEL_PATH = os.path.join("models", MODEL_FILENAME)
 # COMPATIBILITY LAYER FOR KERAS 3 / TF 2.15 CROSS-VERSION ISSUES
 # ============================================================================
 
-class InputLayerCompatibility(tf.keras.layers.Layer):
+class CompatibleInputLayer(InputLayer):
+    """InputLayer that ignores Keras 3 specific parameters"""
     def __init__(self, *args, **kwargs):
-        # Drop Keras 3 exclusive structural parameters
+        # Remove Keras 3 exclusive structural parameters
         kwargs.pop('batch_shape', None)
+        kwargs.pop('optional', None)
         super().__init__(*args, **kwargs)
+    
+    @classmethod
+    def from_config(cls, config):
+        # Clean config before deserialization
+        config.pop('batch_shape', None)
+        config.pop('optional', None)
+        return super().from_config(config)
 
-class DenseWithQuantization(tf.keras.layers.Dense):
+
+class CompatibleDense(Dense):
+    """Dense layer that ignores quantization_config parameter"""
     def __init__(self, *args, **kwargs):
-        # Clean out compilation artifacts unreadable by TF 2.15
+        # Remove quantization_config if present
         kwargs.pop('quantization_config', None)
         super().__init__(*args, **kwargs)
+    
+    @classmethod
+    def from_config(cls, config):
+        config.pop('quantization_config', None)
+        return super().from_config(config)
 
 # ============================================================================
 # DOWNLOAD FUNCTION
@@ -53,22 +70,25 @@ def download_model_from_drive():
     
     print(f"📥 Downloading model from Google Drive...")
     
-    # Direct download URL format for Google Drive API
-    url = f"https://docs.google.com/uc?export=download&id={GOOGLE_DRIVE_FILE_ID}"
+    # CORRECTED: Use the standard Google Drive download URL
+    url = f"https://drive.google.com/uc?export=download&id={GOOGLE_DRIVE_FILE_ID}"
     
     try:
-        # Download the file
-        response = requests.get(url, stream=True)
+        # Start a session to handle cookies
+        session = requests.Session()
+        response = session.get(url, stream=True)
         
-        # Handle Google Drive's virus scan warning intercept if it's broad
+        # Handle Google Drive's virus scan warning
         if "quota" in response.text or "confirm" in response.text:
             import re
-            confirm = re.search(r'confirm=([^&]+)', response.text)
-            if confirm:
-                url = f"https://docs.google.com/uc?export=download&id={GOOGLE_DRIVE_FILE_ID}&confirm={confirm.group(1)}"
-                response = requests.get(url, stream=True)
+            # Extract confirm token
+            confirm_match = re.search(r'confirm=([^&]+)', response.text)
+            if confirm_match:
+                confirm = confirm_match.group(1)
+                url = f"https://drive.google.com/uc?export=download&id={GOOGLE_DRIVE_FILE_ID}&confirm={confirm}"
+                response = session.get(url, stream=True)
         
-        # Save the stream payload into local environment storage
+        # Save the file
         with open(MODEL_PATH, 'wb') as f:
             for chunk in response.iter_content(chunk_size=8192):
                 if chunk:
@@ -112,10 +132,12 @@ def load_model_compatible(model_path=None):
         print("❌ Model file is too small - download failed or corrupted")
         return None
     
-    # Map the custom compatibility classes to clear version parsing conflicts
+    # Register custom objects for deserialization
     custom_objects = {
-        'InputLayer': InputLayerCompatibility,
-        'Dense': DenseWithQuantization
+        'InputLayer': CompatibleInputLayer,
+        'Dense': CompatibleDense,
+        'Functional': tf.keras.Model,
+        'Sequential': tf.keras.Sequential
     }
     
     try:
